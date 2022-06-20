@@ -9,7 +9,7 @@ fig.suptitle('Prędkość fazowa oraz prędkość grupowa', fontsize=16)
 ax1.set_title('f1(x)')
 ax2.set_title('f2(x)')
 ax3.set_title('f1(x)+f2(x)')
-ax3.set_xlabel('Czerwona kropka to prędkość fazowa \n Niebieska kropka to prędkość grupowa')
+ax3.set_xlabel('Czerwona kropka to prędkość fazowa, a niebieska kropka to prędkość grupowa \n Zatrzymanie animacji przy użyciu spacji, a zrzut ekranu klikając "S"')
 
 line1, = ax1.plot([], [], lw=2)
 line2, = ax2.plot([], [], lw=2, color='r')
@@ -65,23 +65,44 @@ for ax in [ax1, ax2, ax3]:
     ax.set_xlim(0, 10)
 
 
-def run(i):
-   y = np.cos(2 * np.pi * (w1_slider.val * i - x * k1_slider.val))
-   line[0].set_data(x, y)
-   y1 = np.cos(2 * np.pi * (w2_slider.val * i - x * k2_slider.val))
-   line[1].set_data(x, y1)
-   y2 = y1 + y
-   line[2].set_data(x, y2)
-   #Współrzędne kropek są wyliczone dla z góry założonej wartości w cosinusie dlatego nie działają dobrze dla każdego przypadku
-   dot.set_data(((w1_slider.val + w2_slider.val) * i) / (k1_slider.val + k2_slider.val), 2 * np.cos(2 * np.pi * ((w1_slider.val - w2_slider.val) * i - ((w1_slider.val + w2_slider.val) * i) / (k1_slider.val + k2_slider.val) * (k1_slider.val - k2_slider.val)) / 2))
-   dot2.set_data(((w1_slider.val - w2_slider.val) * i) / (k1_slider.val - k2_slider.val), 2)
-   return line
 
+def run_animation():
+    anim_running = True
+
+    def onClick(event):
+        nonlocal anim_running
+        if anim_running:
+
+            ani.event_source.stop()
+            anim_running = False
+        else:
+
+            ani.event_source.start()
+            anim_running = True
+
+    fig.canvas.mpl_connect("key_press_event", onClick)
+
+    def run(i):
+
+        y = np.cos(2 * np.pi * (w1_slider.val * i - x * k1_slider.val))
+        line[0].set_data(x, y)
+        y1 = np.cos(2 * np.pi * (w2_slider.val * i - x * k2_slider.val))
+        line[1].set_data(x, y1)
+        y2 = y1 + y
+        line[2].set_data(x, y2)
+        dot.set_data(((w1_slider.val + w2_slider.val) * i) / (k1_slider.val + k2_slider.val), 2 * np.cos(2 * np.pi * (
+                    (w1_slider.val - w2_slider.val) * i - ((w1_slider.val + w2_slider.val) * i) / (
+                        k1_slider.val + k2_slider.val) * (k1_slider.val - k2_slider.val)) / 2))
+        dot2.set_data(((w1_slider.val - w2_slider.val) * i) / (k1_slider.val - k2_slider.val), 2)
+        return line
+
+
+    ani = animation.FuncAnimation(fig, run, frames=2000, blit=True, interval=10, repeat=True)
 
 resetax = plt.axes([0.87, 0.02, 0.1, 0.04])
 button = Button(resetax, 'Reset', hovercolor='0.975')
 
-#Przycisk reset służy do przywrócenia ustawień dla których kropki poruszają się idealnie.
+
 def reset(event):
     w1_slider.reset()
     k1_slider.reset()
@@ -90,12 +111,5 @@ def reset(event):
 
 button.on_clicked(reset)
 
-#Wszystkie wykresy oraz kropki są animowane jedną komendą, ponieważ w przypadku kiedy zrobiłem ich więcej to animacje nie były wystarczająco płynne.
-#Ustawiłem klatki na 2000 aby kropki po jakimś czasie pojawiły się ponownie natomiast skutkuje to tym, że również animacja wykresu się resetuje.
-#Na pewno dałoby się to lepiej napisać ponieważ w zależności od ustawienia sliderów kropki się poruszają szybciej lub wolniej i można natrafić na przypadek
-#w którym nawet te 2000 klatek nie wystarcza żeby kropka przebyła całą drogę po wykresie i znika.
-#Dlatego wydaje mi się że najlepiej jest nie ustawiać w ogóle ilości klatek aby kropki pokazały się raz a dobrze i oglądający zrozumiał czym na wykresie jest
-#prędkość fazowa oraz grupowa i potem po zmianie wartości sliderami już samemu to widział :)
-ani = animation.FuncAnimation(fig, run, frames=2000, blit=True, interval=10, repeat=True)
-#ani = animation.FuncAnimation(fig, run, blit=True, interval=10, repeat=False)
+run_animation()
 plt.show()
